@@ -4,6 +4,12 @@
 *.aar
 *.ap_
 *.aab
+*.so
+*.dex
+*.o
+*.dll
+*.a
+*.lib
 output-metadata.json
 
 # Gradle files
@@ -49,3 +55,7 @@ fastlane/test_output
 *.hprof
 
 app/release
+
+# Rust-specific ignores
+/plugins/RustToast_plugin/target/
+/plugins/RustToast_plugin/Cargo.lock
