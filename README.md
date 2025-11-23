@@ -81,19 +81,18 @@ public static void OnPluginCreate(Context ctx) {}
 
 ## 🔌 Sample Plugins
 
-| Type             | Plugin                                                                                                                                         | Description                           | Version |
-|------------------|------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|---------|
-| **Native(С++)**  | [CPPToast_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.0.0/plugins/CPPToast_plugin)                                           | Displays Toast from C++               | 1.0.0   |
-| **Native(С++)**  | [GUI_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.0.0/plugins/GUI_plugin)                                                     | Creates UI elements (TextView/Button) | 1.0.0   |
-| **Native(С++)**  | [Resource_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.1.0/plugins/Resource_plugin)                                           | File type support                     | 1.1.0   |
-| **Native(С++)**  | [RequestNotificationPermission_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.1.2/plugins/RequestNotificationPermission_plugin) | Handles runtime permissions           | 1.1.2   |
-| **Native(С++)**  | [SendNotification_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.1.3/plugins/SendNotification_plugin)                           | System notifications                  | 1.1.3   |
-| **Native(С)**    | [AlertDialog_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.2.0/plugins/AlertDialog_plugin)                                     | Shows native AlertDialog              | 1.2.0   |
-| **Java**         | [JavaToast_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.2.0/plugins/JavaToast_plugin)                                         | Toast notifications in Java           | 1.2.0   |
-| **Kotlin**       | [KotlinToast_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.2.1/plugins/KotlinToast_plugin)                                     | Toast notifications in Kotlin         | 1.2.1   |
-| **Kotlin**       | [KotlinCoroutines_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.2.2/plugins/KotlinCoroutines_plugin)                           | Kotlin Coroutines in plugin           | 1.2.2   |
-| **Native(Rust)** | [RustToast_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.2.2/plugins/KotlinToast_plugin)                                       | Displays Toast from Rust              | 1.2.2   |
-
+| Type             | Plugin                                                                                                                                                   | Description                           | Version |
+|------------------|----------------------------------------------------------------------------------------------------------------------------------------------------------|---------------------------------------|---------|
+| **Native(C++)**  | [CPPToast_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.0.0/Plugin%20examples/CPPToast_plugin)                                           | Displays Toast from C++               | 1.0.0   |
+| **Native(C++)**  | [GUI_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.0.0/Plugin%20examples/GUI_plugin)                                                     | Creates UI elements (TextView/Button) | 1.0.0   |
+| **Native(C++)**  | [Resource_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.1.0/Plugin%20examples/Resource_plugin)                                           | File type support                     | 1.1.0   |
+| **Native(C++)**  | [RequestNotificationPermission_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.1.2/Plugin%20examples/RequestNotificationPermission_plugin) | Handles runtime permissions           | 1.1.2   |
+| **Native(C++)**  | [SendNotification_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.1.3/Plugin%20examples/SendNotification_plugin)                           | System notifications                  | 1.1.3   |
+| **Native(C)**    | [AlertDialog_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.2.0/Plugin%20examples/AlertDialog_plugin)                                     | Shows native AlertDialog              | 1.2.0   |
+| **Java**         | [JavaToast_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.2.0/Plugin%20examples/JavaToast_plugin)                                         | Toast notifications in Java           | 1.2.0   |
+| **Kotlin**       | [KotlinToast_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.2.1/Plugin%20examples/KotlinToast_plugin)                                     | Toast notifications in Kotlin         | 1.2.1   |
+| **Kotlin**       | [KotlinCoroutines_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.2.2/Plugin%20examples/KotlinCoroutines_plugin)                           | Kotlin Coroutines in plugin           | 1.2.2   |
+| **Native(Rust)** | [RustToast_plugin](https://github.com/All1eexx/PlugiX-For-Android/tree/1.2.2/Plugin%20examples/RustToast_plugin)                                         | Displays Toast from Rust              | 1.2.2   |
 ---
 
 ## 🔧 Technical Notes
