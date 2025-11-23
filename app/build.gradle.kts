@@ -12,7 +12,7 @@ android {
         minSdk = 21
         targetSdk = 36
         versionCode = 121
-        versionName = "1.2.1"
+        versionName = "1.2.2"
 
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
@@ -62,15 +62,15 @@ android {
     externalNativeBuild {
         cmake {
             path = file("src/main/cpp/CMakeLists.txt")
-            version = "4.0.3"
+            version = "4.1.2"
         }
     }
 
     buildFeatures {
         viewBinding = true
     }
-    buildToolsVersion = "36.0.0"
-    ndkVersion = "29.0.13846066"
+    buildToolsVersion = "36.1.0"
+    ndkVersion = "29.0.14206865"
 }
 
 dependencies {
