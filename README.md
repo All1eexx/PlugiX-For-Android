@@ -79,8 +79,6 @@ public static void OnPluginCreate(Context ctx) {}
 ```
 ---
 
-## 🔔 Sample Plugins
-
 ## 🔌 Sample Plugins
 
 | Type             | Plugin                                                                                                                                         | Description                           | Version |
