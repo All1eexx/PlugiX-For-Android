@@ -77,10 +77,10 @@ if not "!TestPath:~1,1!"==":" goto GetDest
 
 set "SCRIPT_DIR=%~dp0"
 if "!SCRIPT_DIR:~-1!"=="\" set "SCRIPT_DIR=!SCRIPT_DIR:~0,-1!"
-set "BUILD_PLUGIN_BAT=!SCRIPT_DIR!\.create_plugin_project\build_plugin.bat"
+set "BUILD_PLUGIN_BAT=!SCRIPT_DIR!\.create_plugin_project\creating_plugin.bat"
 
 if not exist "!BUILD_PLUGIN_BAT!" (
-    echo ERROR: build_plugin.bat not found
+    echo ERROR: creating_plugin.bat not found
     pause
     exit /b 1
 )
