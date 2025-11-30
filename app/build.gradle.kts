@@ -11,11 +11,8 @@ android {
         applicationId = "com.all1eexxx.plugix"
         minSdk = 21
         targetSdk = 36
-        versionCode = 121
+        versionCode = 122
         versionName = "1.2.2"
-
-
-        testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
         
 
         ndk {
@@ -74,11 +71,5 @@ android {
 }
 
 dependencies {
-    implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.appcompat)
-    implementation(libs.material)
-    implementation(libs.androidx.constraintlayout)
-    testImplementation(libs.junit)
-    androidTestImplementation(libs.androidx.junit)
-    androidTestImplementation(libs.androidx.espresso.core)
 }

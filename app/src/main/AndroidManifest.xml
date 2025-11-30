@@ -38,7 +38,7 @@
         android:requestLegacyExternalStorage="true"
         android:preserveLegacyExternalStorage="true"
         android:supportsRtl="true"
-        android:theme="@style/Theme.DynamicNativePluginLoaderForAndroid"
+        android:theme="@style/Theme.PlugiXForAndroid"
         tools:targetApi="30">
         <activity
             android:name=".MainActivity"
