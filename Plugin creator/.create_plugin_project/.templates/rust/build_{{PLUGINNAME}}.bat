@@ -1,8 +1,8 @@
 @echo off
 setlocal enabledelayedexpansion
 
-set ANDROID_SDK_ROOT={{android_sdk}}
-set ANDROID_NDK_HOME={{android_ndk}}
+set ANDROID_SDK_ROOT={{ANDROID_SDK}}
+set ANDROID_NDK_HOME={{ANDROID_NDK}}
 set "RUSTUP={{rustup}}"
 set "CARGO_NDK={{cargo_ndk}}"
 set PROJECT_DIR=%~dp0
