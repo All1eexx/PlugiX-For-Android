@@ -3,19 +3,20 @@ setlocal enabledelayedexpansion
 
 if "%~1"=="" (
     echo ERROR: No language type provided.
-    echo Usage: %~nx0 {C/C++^|cpp^|java^|kotlin^|rust} PluginName
+    echo Usage: %~nx0 {C/C++^|java^|kotlin^|rust} PluginName
     exit /b 1
 )
 
 if "%~2"=="" (
     echo ERROR: No plugin name provided.
-    echo Usage: %~nx0 {C/C++^|cpp^|java^|kotlin^|rust} PluginName [FullDestinationPath]
+    echo Usage: %~nx0 {C/C++^|java^|kotlin^|rust} PluginName [FullDestinationPath]
     exit /b 1
 )
 
 set "LANGUAGE=%~1"
 set "PLUGIN_NAME=%~2"
 set "CUSTOM_DEST=%~3"
+set "PACKAGE_NAME=%~4"
 
 if /i not "%LANGUAGE%"=="CC++" if /i not "%LANGUAGE%"=="java" if /i not "%LANGUAGE%"=="kotlin" if /i not "%LANGUAGE%"=="rust" (
     echo ERROR: Invalid language. Supported: C/C++, java, kotlin, rust
@@ -42,6 +43,7 @@ if not "%CUSTOM_DEST%"=="" (
 echo Template: "%TEMPLATE_DIR%"
 echo Destination: "%DEST_DIR%"
 echo Target Root: "%TARGET_ROOT%"
+if not "%PACKAGE_NAME%"=="" echo Package: "%PACKAGE_NAME%"
 echo.
 
 if not exist "%TEMPLATE_DIR%" (
@@ -68,7 +70,7 @@ echo.
 set "PS1=%TEMP%\plgx_replace_%RANDOM%.ps1"
 del /f /q "%PS1%" >nul 2>&1
 
-echo Param([string]$dst,[string]$name,[string]$targetRoot) > "%PS1%"
+echo Param([string]$dst,[string]$name,[string]$targetRoot,[string]$packageName) > "%PS1%"
 echo $cfgFile = Join-Path $targetRoot 'config.ini' >> "%PS1%"
 echo $cfg = @{} >> "%PS1%"
 echo if (Test-Path -Path $cfgFile) { >> "%PS1%"
@@ -105,6 +107,7 @@ echo } >> "%PS1%"
 
 echo $map = @{} >> "%PS1%"
 echo $map['{{PLUGINNAME}}'] = $name >> "%PS1%"
+echo if ($packageName -ne '') { $map['{{PACKAGENAME}}'] = $packageName } >> "%PS1%"
 
 echo foreach ($sec in $cfg.Keys) { >> "%PS1%"
 echo     foreach ($k in $cfg[$sec].Keys) { >> "%PS1%"
@@ -133,9 +136,25 @@ echo } >> "%PS1%"
 echo if ($cfg['defaults'] -and $cfg['defaults']['min_sdk']) { >> "%PS1%"
 echo     $map['{{MIN_SDK}}'] = $cfg['defaults']['min_sdk'] >> "%PS1%"
 echo } >> "%PS1%"
+echo if ($cfg['defaults'] -and $cfg['defaults']['platform_version']) { >> "%PS1%"
+echo     $map['{{COMPILE_SDK}}'] = $cfg['defaults']['platform_version'] >> "%PS1%"
+echo } >> "%PS1%"
+echo if ($cfg['defaults'] -and $cfg['defaults']['java_version']) { >> "%PS1%"
+echo     $javaVersion = $cfg['defaults']['java_version'] >> "%PS1%"
+echo     # Extract only the first number (major version) >> "%PS1%"
+echo     if ($javaVersion -match '^\d+') { >> "%PS1%"
+echo         $map['{{JAVA_VERSION}}'] = $matches[0] >> "%PS1%"
+echo     } else { >> "%PS1%"
+echo         $map['{{JAVA_VERSION}}'] = $javaVersion >> "%PS1%"
+echo     } >> "%PS1%"
+echo } >> "%PS1%"
 echo if ($cfg['android'] -and $cfg['android']['ndk']) { >> "%PS1%"
 echo     $ndkVal = ResolveVal($cfg['android']['ndk']) >> "%PS1%"
 echo     $map['{{ANDROID_NDK}}'] = $ndkVal >> "%PS1%"
+echo } >> "%PS1%"
+echo if ($cfg['android'] -and $cfg['android']['sdk']) { >> "%PS1%"
+echo     $ndkVal = ResolveVal($cfg['android']['sdk']) >> "%PS1%"
+echo     $map['{{ANDROID_SDK}}'] = $ndkVal >> "%PS1%"
 echo } >> "%PS1%"
 echo if ($cfg['android'] -and $cfg['android']['ninja']) { >> "%PS1%"
 echo     $ninjaVal = ResolveVal($cfg['android']['ninja']) >> "%PS1%"
@@ -167,8 +186,43 @@ echo         Rename-Item -Path $_.FullName -NewName $newName -Force -ErrorAction
 echo     } >> "%PS1%"
 echo } >> "%PS1%"
 
-echo Running placeholder replacement...
-powershell -NoProfile -ExecutionPolicy Bypass -File "%PS1%" "%DEST_DIR%" "%PLUGIN_NAME%" "%TARGET_ROOT%"
+echo # Create package folder structure and move main class file for Java/Kotlin >> "%PS1%"
+echo if ($packageName -ne '') { >> "%PS1%"
+echo     $packagePath = $packageName.Replace('.', '\') >> "%PS1%"
+echo     $javaSrcDir = Join-Path $dst 'src\main\java' >> "%PS1%"
+echo     $kotlinSrcDir = Join-Path $dst 'src\main\kotlin' >> "%PS1%"
+echo     >> "%PS1%"
+echo     # Check if Java source directory exists >> "%PS1%"
+echo     if (Test-Path -Path $javaSrcDir) { >> "%PS1%"
+echo         $mainClassFile = Join-Path $javaSrcDir ($name + '.java') >> "%PS1%"
+echo         $targetPackageDir = Join-Path $javaSrcDir $packagePath >> "%PS1%"
+echo         >> "%PS1%"
+echo         if (Test-Path -Path $mainClassFile) { >> "%PS1%"
+echo             if (-not (Test-Path -Path $targetPackageDir)) { >> "%PS1%"
+echo                 New-Item -ItemType Directory -Path $targetPackageDir -Force ^| Out-Null >> "%PS1%"
+echo             } >> "%PS1%"
+echo             Move-Item -Path $mainClassFile -Destination $targetPackageDir -Force >> "%PS1%"
+echo             Write-Host "Moved Java main class to: $targetPackageDir" >> "%PS1%"
+echo         } >> "%PS1%"
+echo     } >> "%PS1%"
+echo     >> "%PS1%"
+echo     # Check if Kotlin source directory exists >> "%PS1%"
+echo     if (Test-Path -Path $kotlinSrcDir) { >> "%PS1%"
+echo         $mainClassFile = Join-Path $kotlinSrcDir ($name + '.kt') >> "%PS1%"
+echo         $targetPackageDir = Join-Path $kotlinSrcDir $packagePath >> "%PS1%"
+echo         >> "%PS1%"
+echo         if (Test-Path -Path $mainClassFile) { >> "%PS1%"
+echo             if (-not (Test-Path -Path $targetPackageDir)) { >> "%PS1%"
+echo                 New-Item -ItemType Directory -Path $targetPackageDir -Force ^| Out-Null >> "%PS1%"
+echo             } >> "%PS1%"
+echo             Move-Item -Path $mainClassFile -Destination $targetPackageDir -Force >> "%PS1%"
+echo             Write-Host "Moved Kotlin main class to: $targetPackageDir" >> "%PS1%"
+echo         } >> "%PS1%"
+echo     } >> "%PS1%"
+echo } >> "%PS1%"
+
+echo Running placeholder replacement and package setup...
+powershell -NoProfile -ExecutionPolicy Bypass -File "%PS1%" "%DEST_DIR%" "%PLUGIN_NAME%" "%TARGET_ROOT%" "%PACKAGE_NAME%"
 set "RC=%ERRORLEVEL%"
 
 echo Cleaning up temporary files...
