@@ -3,13 +3,13 @@ setlocal enabledelayedexpansion
 
 if "%~1"=="" (
     echo ERROR: No language type provided.
-    echo Usage: %~nx0 {C/C++^|java^|kotlin^|rust} PluginName
+    echo Usage: %~nx0 {C/C++^|java/Kotlin^|rust} PluginName
     exit /b 1
 )
 
 if "%~2"=="" (
     echo ERROR: No plugin name provided.
-    echo Usage: %~nx0 {C/C++^|java^|kotlin^|rust} PluginName [FullDestinationPath]
+    echo Usage: %~nx0 {C/C++^|java/Kotlin^|rust} PluginName [FullDestinationPath]
     exit /b 1
 )
 
@@ -18,8 +18,8 @@ set "PLUGIN_NAME=%~2"
 set "CUSTOM_DEST=%~3"
 set "PACKAGE_NAME=%~4"
 
-if /i not "%LANGUAGE%"=="CC++" if /i not "%LANGUAGE%"=="java" if /i not "%LANGUAGE%"=="kotlin" if /i not "%LANGUAGE%"=="rust" (
-    echo ERROR: Invalid language. Supported: C/C++, java, kotlin, rust
+if /i not "%LANGUAGE%"=="CC++" if /i not "%LANGUAGE%"=="javaKotlin" if /i not "%LANGUAGE%"=="rust" (
+    echo ERROR: Invalid language. Supported: C/C++, java/Kotlin, rust
     exit /b 1
 )
 
@@ -148,6 +148,9 @@ echo     } else { >> "%PS1%"
 echo         $map['{{JAVA_VERSION}}'] = $javaVersion >> "%PS1%"
 echo     } >> "%PS1%"
 echo } >> "%PS1%"
+echo if ($cfg['defaults'] -and $cfg['defaults']['kotlin_version']) { >> "%PS1%"
+echo     $map['{{KOTLIN_VERSION}}'] = $cfg['defaults']['kotlin_version'] >> "%PS1%"
+echo } >> "%PS1%"
 echo if ($cfg['android'] -and $cfg['android']['ndk']) { >> "%PS1%"
 echo     $ndkVal = ResolveVal($cfg['android']['ndk']) >> "%PS1%"
 echo     $map['{{ANDROID_NDK}}'] = $ndkVal >> "%PS1%"
@@ -155,6 +158,10 @@ echo } >> "%PS1%"
 echo if ($cfg['android'] -and $cfg['android']['sdk']) { >> "%PS1%"
 echo     $ndkVal = ResolveVal($cfg['android']['sdk']) >> "%PS1%"
 echo     $map['{{ANDROID_SDK}}'] = $ndkVal >> "%PS1%"
+echo } >> "%PS1%"
+echo if ($cfg['kotlin'] -and $cfg['kotlin']['kotlin_home']) { >> "%PS1%"
+echo     $ndkVal = ResolveVal($cfg['kotlin']['kotlin_home']) >> "%PS1%"
+echo     $map['{{KOTLIN_HOME}}'] = $ndkVal >> "%PS1%"
 echo } >> "%PS1%"
 echo if ($cfg['android'] -and $cfg['android']['ninja']) { >> "%PS1%"
 echo     $ninjaVal = ResolveVal($cfg['android']['ninja']) >> "%PS1%"

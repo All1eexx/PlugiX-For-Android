@@ -10,3 +10,4 @@ public class {{PLUGINNAME}} {
     Log.i(TAG, "Hello World from {{PLUGINNAME}} plugin!");
   }
 }
+

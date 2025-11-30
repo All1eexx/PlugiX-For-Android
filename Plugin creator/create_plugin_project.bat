@@ -8,23 +8,21 @@ echo #            PlugiX Creator              #
 echo ##########################################
 echo #                                        #
 echo #     1. C/C++ Plugin (.so)              #
-echo #     2. Java Plugin (.dex)              #
-echo #     3. Kotlin Plugin (.dex)            #
-echo #     4. Rust Plugin (.so)               #
+echo #     2. Java/Kotlin Plugin (.dex)       #
+echo #     3. Rust Plugin (.so)               #
 echo #     0. Exit                            #
 echo #                                        #
 echo ##########################################
 echo.
 
 :SelectPluginType
-set /p "Plugin_type=   Select an option [0-4]: "
+set /p "Plugin_type=   Select an option [0-3]: "
 if "!Plugin_type!"=="" goto SelectPluginType
 if "!Plugin_type!"=="0" exit /b
 if "!Plugin_type!"=="1" set "LANG_CODE=CC++" & set "Project_type=C/C++" & goto SelectProjectName
-if "!Plugin_type!"=="2" set "LANG_CODE=java" & set "Project_type=Java" & goto SelectProjectName
-if "!Plugin_type!"=="3" set "LANG_CODE=kotlin" & set "Project_type=Kotlin" & goto SelectProjectName
-if "!Plugin_type!"=="4" set "LANG_CODE=rust" & set "Project_type=Rust" & goto SelectProjectName
-echo ERROR: Invalid option! Choose 0-4.
+if "!Plugin_type!"=="2" set "LANG_CODE=javaKotlin" & set "Project_type=Java/Kotlin" & goto SelectProjectName
+if "!Plugin_type!"=="3" set "LANG_CODE=rust" & set "Project_type=Rust" & goto SelectProjectName
+echo ERROR: Invalid option! Choose 0-3.
 goto SelectPluginType
 
 :SelectProjectName
@@ -35,8 +33,7 @@ echo.
 echo Project type: !Project_type!
 echo Project name: !Project_name!
 
-if /I "!LANG_CODE!"=="java" goto JavaPackage
-if /I "!LANG_CODE!"=="kotlin" goto JavaPackage
+if /I "!LANG_CODE!"=="javaKotlin" goto JavaPackage
 set "PACKAGE_NAME="
 goto GetDest
 

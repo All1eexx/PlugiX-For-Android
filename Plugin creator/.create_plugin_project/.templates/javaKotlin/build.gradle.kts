@@ -1,25 +1,37 @@
-﻿val PLUGIN_NAME: String = "{{PLUGINNAME}}"
+﻿plugins {
+    id("java-library")
+    kotlin("jvm") version "{{KOTLIN_VERSION}}"
+}
+
+val PLUGIN_NAME: String = "{{PLUGINNAME}}"
 val PLUGIN_VERSION: String = "1.0.0"
 val MIN_SDK_VERSION: Int = {{MIN_SDK}}
 val COMPILE_SDK_VERSION: Int = {{COMPILE_SDK}}
-val JAVA_VERSION_NUMBER: String = "{{JAVA_VERSION}}"
 
-val JAVA_PATH: String = "{{JAVA_HOME}}"
 val ANDROID_SDK_PATH: String = "{{ANDROID_SDK}}"
 val BUILD_TOOLS_VERSION: String = "{{BUILD_TOOLS_VERSION}}"
+val JAVA_PATH: String = "{{JAVA_HOME}}"
+val JAVA_VERSION_NUMBER: String = "{{JAVA_VERSION}}"
+val KOTLIN_PATH: String = "{{KOTLIN_HOME}}"
+val KOTLIN_VERSION: String = "{{KOTLIN_VERSION}}"
 
 val ENABLE_OBFUSCATION: Boolean = false
 val OBFUSCATION_TOOL: String = "R8" // Choose between "R8" or "PROGUARD"
 
-plugins {
-    id("java-library")
-}
+val USE_JAVA: Boolean = true
+val USE_KOTLIN: Boolean = false
 
 dependencies {
     if (ENABLE_OBFUSCATION && OBFUSCATION_TOOL.equals("R8", ignoreCase = true)) {
-        runtimeOnly("com.android.tools:r8:8.13.17") // needed only for R8
+        runtimeOnly("com.android.tools:r8:8.13.17")
     }
     
+    if (USE_KOTLIN) {
+        implementation(kotlin("stdlib"))
+        implementation(kotlin("reflect"))
+    }
+    
+    compileOnly(files(ANDROID_JAR_PATH))
 }
 
 
@@ -30,6 +42,17 @@ dependencies {
 
 
 
+if (!USE_JAVA && !USE_KOTLIN) {
+    throw GradleException("At least one language must be enabled (USE_JAVA or USE_KOTLIN)")
+}
+
+if (!USE_KOTLIN) {
+    plugins.withId("org.jetbrains.kotlin.jvm") {
+        tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+            enabled = false
+        }
+    }
+}
 
 java {
     val javaVersion = JavaVersion.toVersion(JAVA_VERSION_NUMBER)
@@ -43,15 +66,51 @@ repositories {
     mavenCentral()
     if (ENABLE_OBFUSCATION && OBFUSCATION_TOOL.equals("R8", ignoreCase = true)) {
         maven {
-                url = uri("https://storage.googleapis.com/r8-releases/raw") // needed only for R8
+            url = uri("https://storage.googleapis.com/r8-releases/raw") // needed only for R8
         }
-    }    
-    
+    }
+}
+
+sourceSets {
+    main {
+        java {
+            setSrcDirs(if (USE_JAVA) listOf("src/main/java") else emptyList())
+        }
+    }
+}
+
+if (USE_KOTLIN) {
+    sourceSets {
+        main {
+            kotlin {
+                setSrcDirs(listOf("src/main/kotlin"))
+            }
+            compileClasspath += files(ANDROID_JAR_PATH)
+            runtimeClasspath += files(ANDROID_JAR_PATH)
+        }
+    }
 }
 
 tasks.jar {
     archiveBaseName.set(PLUGIN_NAME)
     archiveVersion.set(PLUGIN_VERSION)
+    
+    from(sourceSets.main.get().output)
+    
+    exclude("**/android/**")
+}
+
+afterEvaluate {
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(JAVA_VERSION_NUMBER))
+        }
+    }
+    
+    sourceSets.forEach { sourceSet ->
+        sourceSet.compileClasspath += files(ANDROID_JAR_PATH)
+        sourceSet.runtimeClasspath += files(ANDROID_JAR_PATH)
+    }
 }
 
 val D8_BAT_PATH: String = "$ANDROID_SDK_PATH/build-tools/$BUILD_TOOLS_VERSION/d8.bat"
@@ -64,6 +123,47 @@ val PROGUARD_CONFIG_FILE: String = "proguard-rules.pro"
 
 fun File.ensureExists(toolName: String) {
     if (!exists()) throw GradleException("$toolName not found: $absolutePath")
+}
+
+if (USE_KOTLIN) {
+    tasks.withType<org.jetbrains.kotlin.gradle.tasks.KotlinCompile>().configureEach {
+        compilerOptions {
+            jvmTarget.set(org.jetbrains.kotlin.gradle.dsl.JvmTarget.fromTarget(JAVA_VERSION_NUMBER))
+        }
+        
+        doFirst {
+            val androidJar = File(ANDROID_JAR_PATH)
+            if (!androidJar.exists()) {
+                throw GradleException("Android JAR not found: ${androidJar.absolutePath}")
+            }
+            println("Kotlin compilation with Android JAR: ${androidJar.name}")
+        }
+    }
+}
+
+if (USE_JAVA) {
+    tasks.named<JavaCompile>("compileJava") {
+        options.compilerArgs.addAll(listOf("--release", JAVA_VERSION_NUMBER))
+        
+        doFirst {
+            val androidJar = File(ANDROID_JAR_PATH)
+            if (androidJar.exists()) {
+                classpath = classpath.plus(files(androidJar))
+                println("Android classpath added for Java compilation: ${androidJar.name}")
+            } else {
+                throw GradleException("Android JAR not found: ${androidJar.absolutePath}")
+            }
+        }
+    }
+
+    tasks.withType<JavaCompile>().configureEach {
+        options.isFork = true
+        options.forkOptions.executable = JAVAC_EXEC_PATH
+    }
+} else {
+    tasks.withType<JavaCompile>().configureEach {
+        enabled = false
+    }
 }
 
 tasks.register("cleanObfuscationFiles") {
@@ -101,7 +201,10 @@ fun validateBuildEnvironment() {
     
     File(ANDROID_JAR_PATH).ensureExists("Android Platform")
     File(JAVA_EXEC_PATH).ensureExists("Java")
-    File(JAVAC_EXEC_PATH).ensureExists("Javac")
+    
+    if (USE_JAVA) {
+        File(JAVAC_EXEC_PATH).ensureExists("Javac")
+    }
     
     if (ENABLE_OBFUSCATION && OBFUSCATION_TOOL.equals("PROGUARD", ignoreCase = true)) {
         File(PROGUARD_JAR_PATH).ensureExists("ProGuard")
@@ -323,25 +426,6 @@ tasks.register<Exec>("buildDexFromObfuscatedJar") {
     }
 }
 
-tasks.named<JavaCompile>("compileJava") {
-    options.compilerArgs.addAll(listOf("--release", JAVA_VERSION_NUMBER))
-    
-    doFirst {
-        val androidJar = File(ANDROID_JAR_PATH)
-        if (androidJar.exists()) {
-            classpath = classpath.plus(files(androidJar))
-            println("Android classpath added: ${androidJar.name}")
-        } else {
-            throw GradleException("Android JAR not found: ${androidJar.absolutePath}")
-        }
-    }
-}
-
-tasks.withType<JavaCompile>().configureEach {
-    options.isFork = true
-    options.forkOptions.executable = JAVAC_EXEC_PATH
-}
-
 tasks.register("checkEnvironment") {
     group = "verification"
     description = "Validate build environment configuration"
@@ -478,23 +562,81 @@ fun validateDexOutput(dexDir: File) {
 fun printEnvironmentInfo() {
     println("Build Environment:")
     println("  Plugin: $PLUGIN_NAME v$PLUGIN_VERSION")
+    println("  Languages: ${getEnabledLanguages()}")
     println("  Obfuscation: ${if (ENABLE_OBFUSCATION) "ENABLED ($OBFUSCATION_TOOL)" else "DISABLED"}")
     println("  Min SDK: $MIN_SDK_VERSION, Compile SDK: $COMPILE_SDK_VERSION")
     println("  Java: $JAVA_VERSION_NUMBER")
+    if (USE_KOTLIN) {
+        println("  Kotlin: $KOTLIN_VERSION")
+    }
     
-    val checks = listOf(
+    val checks = mutableListOf<Pair<String, File>>(
         "Java Exec" to File(JAVA_EXEC_PATH),
-        "Javac Exec" to File(JAVAC_EXEC_PATH),
         "D8 Tool" to (File(D8_BAT_PATH).takeIf { it.exists() } ?: File(D8_JAR_PATH)),
-        "Android JAR" to File(ANDROID_JAR_PATH),
-        "ProGuard" to File(PROGUARD_JAR_PATH),
-        "ProGuard Config" to File(PROGUARD_CONFIG_FILE)
+        "Android JAR" to File(ANDROID_JAR_PATH)
     )
+    
+    if (USE_JAVA) {
+        checks.add("Javac Exec" to File(JAVAC_EXEC_PATH))
+    }
+    
+    if (ENABLE_OBFUSCATION && OBFUSCATION_TOOL.equals("PROGUARD", ignoreCase = true)) {
+        checks.add("ProGuard" to File(PROGUARD_JAR_PATH))
+        checks.add("ProGuard Config" to File(PROGUARD_CONFIG_FILE))
+    }
     
     checks.forEach { (name, file) ->
         println("  $name: ${if (file.exists()) "✓" else "✗"}")
     }
     
-    val javaFiles = project.fileTree("src/main/java") { include("**/*.java") }
-    println("  Java Sources: ${javaFiles.files.size} files")
+    if (USE_JAVA) {
+        val javaFiles = project.fileTree("src/main/java") { include("**/*.java") }
+        println("  Java Sources: ${javaFiles.files.size} files")
+    }
+    
+    if (USE_KOTLIN) {
+        val kotlinFiles = project.fileTree("src/main/kotlin") { include("**/*.kt") }
+        println("  Kotlin Sources: ${kotlinFiles.files.size} files")
+    }
+}
+
+fun getEnabledLanguages(): String {
+    return when {
+        USE_JAVA && USE_KOTLIN -> "Java + Kotlin"
+        USE_JAVA -> "Java only"
+        USE_KOTLIN -> "Kotlin only"
+        else -> "None (invalid configuration)"
+    }
+}
+
+tasks.register("validateLanguages") {
+    group = "verification"
+    description = "Validate language configuration"
+    
+    doLast {
+        println("Language Configuration:")
+        println("  Java: ${if (USE_JAVA) "ENABLED" else "DISABLED"}")
+        println("  Kotlin: ${if (USE_KOTLIN) "ENABLED" else "DISABLED"}")
+        println("  Combined: ${getEnabledLanguages()}")
+        
+        if (!USE_JAVA && !USE_KOTLIN) {
+            throw GradleException("Invalid configuration: At least one language must be enabled")
+        }
+        
+        if (USE_JAVA) {
+            val javaDir = File("src/main/java")
+            if (!javaDir.exists()) {
+                println("⚠ Warning: Java source directory not found: ${javaDir.absolutePath}")
+            }
+        }
+        
+        if (USE_KOTLIN) {
+            val kotlinDir = File("src/main/kotlin")
+            if (!kotlinDir.exists()) {
+                println("⚠ Warning: Kotlin source directory not found: ${kotlinDir.absolutePath}")
+            }
+        }
+        
+        println("✓ Language configuration is valid")
+    }
 }
