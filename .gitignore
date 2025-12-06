@@ -50,6 +50,8 @@ fastlane/test_output
 # Other
 *.DS_Store
 *.swp
+.vs/
+.vsc/
 
 # Android Profiling
 *.hprof
