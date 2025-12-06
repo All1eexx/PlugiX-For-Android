@@ -1,4 +1,4 @@
-﻿plugins {
+plugins {
     id("java-library")
     kotlin("jvm") version "{{KOTLIN_VERSION}}"
 }

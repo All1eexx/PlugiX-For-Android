@@ -9,31 +9,70 @@ set PROJECT_DIR=%~dp0
 set OUTPUT_DIR=%PROJECT_DIR%\jniLibs
 set TARGET_ARCH={{default_abi}}
 set ANDROID_PLATFORM={{min_sdk}}
-set BUILD_TOOLS_VERSION={{build_tools_version}}
+
+
+
+
+
+
+
+
+
 
 echo ========================================
 echo Rust Android Build Script
 echo ========================================
 
 echo Checking environment...
+
+where cargo >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo ERROR: Cargo not found in PATH
+    echo Please install Rust or add it to PATH
+    pause
+    exit /b 1
+)
+
 if not exist "%ANDROID_NDK_HOME%" (
     echo ERROR: Android NDK not found at: %ANDROID_NDK_HOME%
+    echo Please set ANDROID_NDK_HOME environment variable
+    pause
     exit /b 1
 )
-
-if not exist "%PROJECT_DIR%" (
-    echo ERROR: Project directory not found at: %PROJECT_DIR%
-    exit /b 1
-)
-
-echo Setting up paths...
-set PATH=%ANDROID_NDK_HOME%;%ANDROID_SDK_ROOT%\build-tools\%BUILD_TOOLS_VERSION%;%PATH%
-set PATH={{cargo_dir}};{{rustc_dir}};%PATH%
 
 cd /d "%PROJECT_DIR%"
 
+echo Extracting library name from Cargo.toml...
+
+if exist "Cargo.toml" (
+    for /f "tokens=*" %%a in ('type "Cargo.toml"') do (
+        set "line=%%a"
+        
+        set "line=!line: =!"
+        
+        if "!line:~0,5!"=="name=" (
+            set "CRATE_NAME=!line:~5!"
+            
+            set "CRATE_NAME=!CRATE_NAME:"=!"
+            
+            for /f "tokens=1 delims=#" %%c in ("!CRATE_NAME!") do (
+                set "CRATE_NAME=%%c"
+            )
+            
+            set "CRATE_NAME=!CRATE_NAME: =!"
+            
+            echo Found crate name: !CRATE_NAME!
+            set LIB_NAME=lib!CRATE_NAME!.so
+            goto :name_found
+        )
+    )
+)
+
+:name_found
+echo Library will be named: !LIB_NAME!
+
 echo Checking Rust target %TARGET_ARCH%-linux-android...
-"%RUSTUP%" target list | find "%TARGET_ARCH%-linux-android" > nul
+rustup target list | find "%TARGET_ARCH%-linux-android" > nul
 if %ERRORLEVEL% neq 0 (
     echo Adding Rust target...
     rustup target add %TARGET_ARCH%-linux-android
@@ -41,42 +80,55 @@ if %ERRORLEVEL% neq 0 (
     echo Target already installed.
 )
 
+echo Checking cargo-ndk...
+cargo ndk --help >nul 2>&1
+if %ERRORLEVEL% neq 0 (
+    echo cargo-ndk not found, installing...
+    cargo install cargo-ndk
+)
+
 if exist "%OUTPUT_DIR%\%TARGET_ARCH%" (
     echo Cleaning previous build output...
-    rmdir /s /q "%OUTPUT_DIR%\%TARGET_ARCH%"
-)
-
-
-echo Building Rust library for Android...
-
-if not exist "%CARGO_NDK%" (
-    echo ERROR: cargo-ndk not found at "%CARGO_NDK%"
-    exit /b 1
-)
-
-
-"%CARGO_NDK%" ^
-    --platform %ANDROID_PLATFORM% ^
-    -t %TARGET_ARCH% ^
-    -o "%OUTPUT_DIR%" ^
-    build --release
-
-set LIB_PATH=%OUTPUT_DIR%\%TARGET_ARCH%\libPLUGINNAME.so
-if exist "%LIB_PATH%" (
-    echo.
-    echo SUCCESS: Library built successfully!
-    echo Location: %LIB_PATH%
-    echo Size: 
-    for %%F in ("%LIB_PATH%") do echo %%~zF bytes
-    echo.
-    dir "%OUTPUT_DIR%\%TARGET_ARCH%"
-    exit /b 0
-) else (
-    echo.
-    echo ERROR: Build failed - output not found at: %LIB_PATH%
-    echo Check build errors above.
+    rmdir /s /q "%OUTPUT_DIR%\%TARGET_ARCH%" 2>nul
 )
 
 echo.
-echo Build process completed.
+echo Building Rust library for Android...
+
+cargo ndk ^
+    --platform %ANDROID_PLATFORM% ^
+    --target %TARGET_ARCH% ^
+    --output-dir "%OUTPUT_DIR%" ^
+    build --release
+
+set LIB_PATH=%OUTPUT_DIR%\%TARGET_ARCH%\!LIB_NAME!
+
+if not exist "%LIB_PATH%" (
+    echo.
+    echo WARNING: Library not found at: %LIB_PATH%
+    echo Searching for .so files...
+    
+    dir /b "%OUTPUT_DIR%\%TARGET_ARCH%\*.so" 2>nul
+    if exist "%OUTPUT_DIR%\%TARGET_ARCH%\*.so" (
+        echo Found .so files, using first one...
+        for %%f in ("%OUTPUT_DIR%\%TARGET_ARCH%\*.so") do (
+            set LIB_PATH=%%f
+            goto :found
+        )
+    )
+    
+    echo ERROR: No .so files found
+    echo Check if build succeeded
+    pause
+    exit /b 1
+)
+
+:found
+echo.
+echo SUCCESS: Library built!
+echo Location: %LIB_PATH%
+for %%F in ("%LIB_PATH%") do echo Size: %%~zF bytes
+
+echo.
+echo Build completed successfully!
 pause
