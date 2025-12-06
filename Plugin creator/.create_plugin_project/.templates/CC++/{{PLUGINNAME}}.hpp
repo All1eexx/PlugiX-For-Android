@@ -5,7 +5,6 @@
 extern "C" {
 #endif
 
-// Объявляем математические функции для использования в C
 int {{PLUGINNAME}}_add(int a, int b);
 int {{PLUGINNAME}}_multiply(int a, int b);
 double {{PLUGINNAME}}_power(double base, double exponent);
