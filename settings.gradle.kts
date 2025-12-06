@@ -20,5 +20,5 @@ dependencyResolutionManagement {
     }
 }
 
-rootProject.name = "PlugiX"
+rootProject.name = "PlugiX For Android"
 include(":app")
